@@ -1,0 +1,82 @@
+body {
+	margin: 0px;
+	background-color: #000000;
+	/*overflow: hidden;*/
+}
+
+#blocker, #start-button {
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	user-select: none;          /* Likely future */  
+}
+
+#lines, #lines2 {
+	position: fixed;
+	display:none;
+	z-index: 1;
+}
+
+#blocker {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0,0,0,0.5);
+	color: white;
+	text-align: center;
+	/*padding: 2em 0;*/
+	font-family: verdana, sans-serif;
+}
+
+button {
+	font: inherit;
+	background: inherit;
+	color: white;
+}
+
+button {
+	padding: 0.5em;
+	margin: 0.5em;
+	cursor: pointer;
+	border:1px solid white;
+	border-radius: 0.25em;
+}
+
+#start-button, #init-button {
+	font-size: 2em;
+}
+
+#start-button {
+	display: none;
+}
+
+#start-button:active, button:active  {
+	color: black;
+	background: white;
+}
+
+#hotdogs-link {
+	display: none;
+}
+
+a {
+	color: white;
+}
+
+#phone {
+	margin: 0 auto;
+	display: none;
+}
+
+#desktop {
+	opacity: 0;
+	transition: opacity 2s ease-in;
+}
+
+#desktop a {
+	color: white;
+}
+
+#view {
+	text-decoration: underline;
+}
