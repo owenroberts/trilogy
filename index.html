@@ -4,27 +4,31 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta charset="utf-8">
-	<title>funeral</title>
+	<title>hot dogs trilogy</title>
 	<link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body>
 	<div id="blocker">
 		<div id="title">
-			<p>Funeral by <a href="http://owen.cool/">Owen Ribbit</a></p>
+			<p>Hot Dogs by <a href="http://owen.cool/">Owen Ribbit</a></p>
 		</div>
-		<button id="init-button">Start</button>
-		<button id="start-button">Loading</button>
+		<button id="start-button">Start</button>
+		<!-- <button id="start-button">Loading</button> -->
+		<p id="loading">Loading...</p>
+		<button id="tap">Tap to play</button>
+		<p id="the-end">The end</p>
+		<div id="scenes">
+			<button id="part1-button" data-part="1">Part 1: Hot Dogs</button>
+			<button id="part2-button" data-part="2">Part 2: Trampoline</button>
+			<button id="part3-button" data-part="3">Part 3: Funeral</button>
+		</div>
 		<div id="desktop">
 			<p>Recommended for mobile.</p>
 			<p>If using mobile, for device orientation control, refresh and allow device orientation access.  You may need to clear your browser cache.</p>
 			<p><button id="launch-touch">Or use touch controls</button></p>
 		</div>
 		<p id="instructions"></p>
-		
-		<div id="hotdogs-link">
-			<p><a href="http://hotdogs.owen.cool">View Part 1: Hot Dogs</a></p>
-			<p><a href="http://trampoline.owen.cool">View Part 2: Trampoline</a></p>
-		</div>
+
 		<canvas id="phone"></canvas>
 	</div>
     <div id="container">
@@ -32,7 +36,8 @@
 	</div>
 
 	<script src="lines/lib/cool/cool.js"></script>
+	<script src="lines/classes/LinesAnimation.js"></script>
 	<script src="lines/play/play.js"></script>
-	<script type="module" src="funeral.js"></script>
+	<script type="module" src="app.js"></script>
 </body>
 </html>

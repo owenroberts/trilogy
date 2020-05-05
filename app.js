@@ -3,96 +3,49 @@ import { DeviceOrientationControls } from './jsm/DeviceOrientationControls.js';
 import { OutlineEffect } from './jsm/OutlineEffect.js';
 import { GLTFLoader } from './jsm/GLTFLoader.js';
 
+import { Funeral } from './jsm/Funeral.js';
+import { Hotdogs } from './jsm/Hotdogs.js';
+import { Trampoline } from './jsm/Trampoline.js';
+
+let currentScene;
+
 const blocker = document.getElementById( 'blocker' );
 const startButton = document.getElementById( 'start-button' );
-const initButton = document.getElementById( 'init-button' );
 const instructions = document.getElementById( 'instructions' );
+const scenes = document.getElementById( 'scenes' );
+const loading = document.getElementById( 'loading' );
+const tap = document.getElementById( 'tap' );
+const theEnd = document.getElementById( 'the-end' );
+const part1Button = document.getElementById( 'part1-button' );
+const part2Button = document.getElementById( 'part2-button' );
+const part3Button = document.getElementById( 'part3-button' );
+
+part1Button.addEventListener( 'touchend', chooseScene, false );
+part1Button.addEventListener( 'click', chooseScene, false );
+part2Button.addEventListener( 'touchend', chooseScene, false );
+part2Button.addEventListener( 'click', chooseScene, false );
+part3Button.addEventListener( 'touchend', chooseScene, false );
+part3Button.addEventListener( 'click', chooseScene, false );
+
+tap.addEventListener( 'touchend', start, false );
+tap.addEventListener( 'click', start, false );
+
+startButton.onclick = init;
+
+
 let bgMusic, bgLoader;
 let bgMusicLoaded = false;
-const themeFile = 'clips/theme_80.mp3', endFile = 'clips/end_80.mp3';
-
 let restart = false;
+let firstChapter = true;
 
-const idles = [];
-const walks = [];
-const talks = [];
-let deathIndex;
+// this is part of data
+let idles = [];
+let walks = [];
+let talks = [];
 
 /* sides  0 front  1 back  2 top  3 bottom  4 right  5 left*/
-const firstDrawing = 'drawings/intro.json';
-const lastDrawing = 'drawings/end.json';
-const dialogs = [
-	{ track: "clips/0.mp3",	 anim: "drawings/bus.json", 
-		sides: [0], 
-		delay: 2000, end: 2000 },
-	{ track: "clips/1.mp3",	 anim: "drawings/line.json", 
-		sides: [0, 1, 4, 5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/2.mp3",	 anim: "drawings/talking.json", 
-		sides: [0, 4], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/3.mp3",	 anim: "drawings/option.json", 
-		sides: [3], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/4.mp3",	 anim: "drawings/web.json", 
-		sides: [1, 5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/5.mp3",	 anim: "drawings/broc.json", 
-		sides: [0, 1, 2, 3, 4, 5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/6.mp3",	 anim: "drawings/hell.json", 
-		sides: [0, 1, 4, 5], 
-		delay: 4000, end: 2000 },
-	{ track: "clips/7.mp3",	 anim: "drawings/glasses.json", 
-		sides: [4, 5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/8.mp3",	 anim: "drawings/mother.json", 
-		sides: [0, 1], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/9.mp3",	 anim: "drawings/lobster.json", 
-		sides: [3], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/10.mp3",	 anim: "drawings/quiet.json", 
-		sides: [3], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/11.mp3",	 anim: "drawings/kill.json", 
-		sides: [5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/12.mp3",	 anim: "drawings/molecule.json", 
-		sides: [0, 1, 2, 3, 4, 5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/13.mp3",	 anim: "drawings/buttons.json", 
-		sides: [0], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/14.mp3",	 anim: "drawings/casket.json", 
-		sides: [1], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/15.mp3",	 anim: "drawings/face.json", 
-		sides: [1], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/16.mp3",	 anim: "drawings/orbit.json", 
-		sides: [0, 1, 2, 4, 5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/17.mp3",	 anim: "drawings/pigs.json", 
-		sides: [0, 1, 2, 3, 4, 5], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/18.mp3",	 anim: "drawings/mouth.json", 
-		sides: [0], 
-		delay: 4000, end: 4000 },
-	{ track: "clips/19.mp3",	 anim: "drawings/ride.json", 
-		sides: [4], 
-		delay: 4000, end: 4000 }
-];
 const startDelay = 4000;
 const endDelay = 4000;
-
-const durations = { "BDuckRoll": 44, "BRight": 30, "BTalk": 100, "BTalk3": 60, "BIdle3": 183, "BWalk": 117, "BJump": 90, "BIdle4": 53, "BTalk4": 60, "BTalk2": 60, "BNewWalkLook": 300, "BLeft": 30, "BIdle": 300, "BTalk5": 60, "BIdle2": 113, "BDeath": 300, "BIdle5": 156 };
-
-const types = {
-	idle: ['BIdle', 'BIdle2', 'BIdle3', 'BIdle4', 'BIdle5'],
-	walk: ['BWalk', 'BDuckRoll', 'BRight', 'BLeft', 'BJump', 'BNewWalkLook'],
-	talk: ['BTalk', 'BTalk2', 'BTalk3', 'BTalk4', 'BTalk5']
-};
 
 let currentDialog = 0;
 let time;
@@ -104,22 +57,17 @@ let linesPlayer = new LinesPlayer(lines);
 linesPlayer.isTexture = true;
 let planes = [];
 
-let phoneLines = new LinesPlayer(document.getElementById('phone'));
-phoneLines.loadAnimation('drawings/phone.json');
+let phoneLines = new LinesPlayer(document.getElementById('phone'), 'drawings/phone.json');
 
 let camera, scene, renderer, controls, cameraOffset, origin;
 let linesTexture; /* texture gets updated */
 let clock, mixer;
 let listener, voiceSound, voiceSource, audioLoader;
 let effect;
+let loader;
 
-let charAxes;
-let char;
-window.char = char;
-const charSpeed = { min: 0.05, max: 0.1 };
-const cameraSpeed = 0.0001;
+let char, model;
 
-/* check for touch parameter*/
 document.getElementById('launch-touch').onclick = launchTouch;
 let touchControls = false;
 function launchTouch() {
@@ -127,24 +75,8 @@ function launchTouch() {
 	launch();
 }
 
-
-
-document.getElementById('init-button').onclick = init;
-
-// better than mobile check, includes ipad
-// function onMotion( ev ) {
-// 	window.removeEventListener('devicemotion', onMotion, false);
-// 	if (ev.acceleration.x != null || ev.accelerationIncludingGravity.x != null) {
-// 		if (!touchControls) launch();
-// 	}
-// }
-// window.addEventListener('devicemotion', onMotion, false);
-	
-
-
 function launch() {
-
-	startButton.style.display = "inline-block";
+	scenes.style.display = 'block';
 	instructions.innerHTML = "Headphones recommended." 
 	if (!touchControls) instructions.innerHTML += "<br> Rotate phone to view.";
 	document.getElementById('phone').style.display = 'block';
@@ -153,8 +85,7 @@ function launch() {
 
 function init() {
 
-	initButton.remove();
-
+	startButton.remove();
 
 	clock = new THREE.Clock();
 	scene = new THREE.Scene();
@@ -162,7 +93,6 @@ function init() {
 	// change orientation for android
 	if (navigator.userAgent.toLowerCase().indexOf("android") > -1) {
 		scene.rotation.set( 0, -Math.PI/2, 0 );
-		// scene.position.set( 5, 0, 5 ); // match camera offset
 	}
 
 	renderer = new THREE.WebGLRenderer();
@@ -183,15 +113,20 @@ function init() {
 	};
 
 	window.onControlsDenied = function() {
-		document.getElementById('desktop').style.opacity = 1; 
+		document.getElementById('desktop').style.opacity = 1;
+	};
+
+	window.onCheckDevice = function( controls ) {
+		document.getElementById('desktop').style.opacity = 1;
+		window.addEventListener("devicemotion", function(event) {
+   	 		if (event.rotationRate.alpha || event.rotationRate.beta || event.rotationRate.gamma)
+    	    	document.getElementById('desktop').style.opacity = 0;
+
+		});
+
 	};
 
 	controls = new DeviceOrientationControls( camera );
-
-	camera.position.z = 5;
-	camera.position.y = 0;
-	cameraOffset = camera.position.clone();
-
 
 	/* outside lines */
 	lines.width =  1024;
@@ -226,116 +161,160 @@ function init() {
 	voiceSound = new THREE.PositionalAudio( listener );
 	bgLoader = new THREE.AudioLoader();
 	bgMusic = new THREE.Audio( listener );
-	bgMusic.setVolume( 0.25 );
+	
 
 	/* blender */
 	mixer = new THREE.AnimationMixer( scene );
-	const loader = new GLTFLoader();
-	loader.load("models/char_arm.gltf", gltf => {
+	loader = new GLTFLoader();
+}
+
+function loadModel(callback) {
+	loader.load(currentScene.model, gltf => {
 
 		// console.log( gltf );
+		idles = [];
+		walks = [];
+		talks = [];
 
-		char = gltf.scene.children[0];
-		char.animations = gltf.animations;
-		for (let i = 0; i < char.animations.length; i++) {
-			const n = char.animations[i].name;
-			char.animations[i].duration = 1000 / 24 * durations[n] / 1000;
-			if (types.idle.indexOf( n ) != -1) {
+		model = gltf.scene.children[0];
+		model.animations = gltf.animations;
+		for (let i = 0; i < model.animations.length; i++) {
+			const n = model.animations[i].name;
+			model.animations[i].duration = 1000 / 24 * currentScene.durations[n] / 1000;
+			if (currentScene.types.idle.includes( n )) {
 				idles.push( i );
-			} else if (types.walk.indexOf( n ) != -1) {
+			} else if (currentScene.types.walk.includes( n )) {
 				walks.push( i );
-			} else if (types.talk.indexOf( n ) != -1) {
+			} else if (currentScene.types.talk.includes( n )) {
 				talks.push( i );
-			} else {
-				deathIndex = i;
 			}
 		}
-		
+
 		// change orientation for android
 		if (navigator.userAgent.toLowerCase().indexOf("android") > -1) {
-			char.position.set( 4, -5, -4 );
+			// console.log('android')
+			model.position.set( currentScene.androidPosition.x, currentScene.androidPosition.y, currentScene.androidPosition.z );
 			// char.rotation.set( 0, -Math.PI/2, 0 );
-			cameraOffset.x -= char.position.x;
-			cameraOffset.z -= char.position.z;
+			cameraOffset.x -= model.position.x;
+			cameraOffset.z -= model.position.z;
 		} else {
-			char.position.set( 0, -5, -2 );
+			// console.log('position', currentScene.charPosition);
+			model.position.set( currentScene.charPosition.x, currentScene.charPosition.y, currentScene.charPosition.z );
 		}
 
-		char.scale.set( 0.5, 0.5, 0.5 );
-		char.xSpeed = 0;
-		char.zSpeed = 0;
-		char.add( voiceSound );
-		mixer.clipAction( char.animations[deathIndex], char ).play();
-		scene.add( char );
-		origin = char.position.clone();
+		model.scale.set( 0.5, 0.5, 0.5 );
+		model.xSpeed = 0;
+		model.zSpeed = 0;
+		model.add( voiceSound );
 
-		let bgInterval;
-		if (bgMusicLoaded) ready();
-		else {
-			bgInterval = setInterval(function() {
-				if (bgMusicLoaded) {
-					clearInterval(bgInterval);
-					ready();
-				}
-			}, 1000 / 60);
-		}
+		// console.log(model.animations);
+		
+		// first anim ?
+		// mixer.clipAction( model.animations[currentScene.startIndex], model ).play();
 
-		function ready() {
-			startButton.textContent = "Tap to play";
-			startButton.addEventListener( 'touchend', start, false );
-			startButton.addEventListener( 'click', start, false );
-		}
-
-		console.log(char);
+		callback();
 	});
+}
 
-	bgLoader.load(themeFile, buffer => {
+function chooseScene(ev) {
+	theEnd.style.display = 'none';
+
+	if (ev.target.dataset.part == 1) currentScene = Hotdogs;
+	if (ev.target.dataset.part == 2) currentScene = Trampoline;
+	if (ev.target.dataset.part == 3) currentScene = Funeral;
+
+	bgMusic.setVolume( currentScene.themeVolume );
+	bgLoader.load(currentScene.themeFile, buffer => {
 		bgMusicLoaded = true;
 		bgMusic.setBuffer( buffer );
 		bgMusic.setLoop( true );
 	});
+
+	loading.style.display = 'block';
+	scenes.style.display = 'none';
+	// set current scene
+	loadModel(startScene);
 }
 
+function startScene() {
+	let bgInterval;
+	if (bgMusicLoaded) ready();
+	else {
+		bgInterval = setInterval(function() {
+			if (bgMusicLoaded) {
+				clearInterval(bgInterval);
+				ready();
+			}
+		}, 1000 / 60);
+	}
+
+	function ready() {
+		// startButton.textContent = "Tap to play";
+		loading.style.display = 'none';
+		tap.style.display = 'inline-block';
+	}
+}
+
+/* start scene after loading or restart */
 function start() {
+
+	scene.remove( char );
+	char = model;
+	scene.add( char );
+	origin = char.position.clone();
+	mixer.clipAction( model.animations[currentScene.startIndex], model ).play();
+
+	tap.style.display = 'none';
 	document.body.style.overflow = 'hidden';
 	// fullscreen();
-	if (document.getElementById('phone'))
-		document.getElementById('phone').remove();
-	if (touchControls) setupTouchControls();
+	
+	camera.position.x = currentScene.camera.position.x;
+	camera.position.y = currentScene.camera.position.y;
+	camera.position.z = currentScene.camera.position.z;
+	cameraOffset = camera.position.clone();
+	camera.rotation.set( 0, 0, 0 );
+	
 
-	if (restart) {
-		currentDialog = 0;
-		dialogs.map((d) => d.start = 0);
-		nextClip = true;
-		bgLoader.load(themeFile, buffer => {
-			bgMusic.stop();
-			bgMusic.isPlaying = false;		
-			bgMusic.setBuffer( buffer );
-			bgMusic.setLoop( true );
-			bgMusic.setVolume( 0.25 );
-			if (!bgMusic.isPlaying) bgMusic.play();
-		});
-	} else {
-		bgMusic.loop = true;
-	}
 
-	if (!bgMusic.isPlaying) {
-		bgMusic.play();
-		animate(); // start actual animation
-		time = performance.now() + startDelay; /* beginning delay */
-	}
+	
+	currentDialog = 0;
+	currentScene.dialogs.map(d => d.start = 0);
+	
+	if (bgMusic.isPlaying) bgMusic.stop();
+
+	bgLoader.load(currentScene.themeFile, buffer => {
+		// bgMusic.stop();
+		bgMusic.isPlaying = false;		
+		bgMusic.setBuffer( buffer );
+		bgMusic.setLoop( true );
+		bgMusic.setVolume( currentScene.themeVolume );
+		if (!bgMusic.isPlaying) bgMusic.play();
+	});
+
+	nextClip = true;
+	time = performance.now() + startDelay; /* beginning delay */
 
 	blocker.style.display = 'none';
+	blocker.style.opacity = 0;
 	
-	linesPlayer.loadAnimation(firstDrawing, () => {
-		planes.map((p, i) => [0, 1, 2, 3, 4, 5].indexOf(i) != -1 ? p.visible = true : p.visible = false);
+	linesPlayer.load(currentScene.firstDrawing, () => {
+		planes.map((p, i) => p.visible = currentScene.firstSides.includes(i));
 		linesPlayer.ctx.lineWidth = 2;
 	});
 
-	/* for mobile to work  */
-	const source = listener.context.createBufferSource();
-	source.connect(listener.context.destination);
-	source.start();
+	
+	if (firstChapter) {
+		if (touchControls) setupTouchControls();
+		animate();
+
+		/* for mobile audio  to work  */
+		const source = listener.context.createBufferSource();
+		source.connect(listener.context.destination);
+		source.start();
+		if (document.getElementById('phone'))
+			document.getElementById('phone').remove();
+	}
+	firstChapter = false;
 }
 
 function talk( dialog ) {
@@ -343,14 +322,16 @@ function talk( dialog ) {
 	char.xSpeed = 0;
 	char.zSpeed = 0;
 
-	if (Math.random() > 0.5) {
+	camera.ySpeed = Cool.random(-currentScene.cameraSpeed, currentScene.cameraSpeed);
+
+	if (Math.random() < currentScene.lookChance) {
 		const lookVec = new THREE.Vector3( camera.position.x, char.position.y, camera.position.z );
 		char.lookAt( lookVec );
 	}
 	
-	linesPlayer.loadAnimation(dialog.anim, () => {
+	linesPlayer.load(dialog.anim, () => {
 		// turn on dialog.sides, off others
-		planes.map((p, i) => dialog.sides.indexOf(i) != -1 ? p.visible = true : p.visible = false);
+		planes.map((p, i) => p.visible = dialog.sides.includes(i));
 		linesPlayer.ctx.lineWidth = 2;
 	});
 	audioLoader.load( dialog.track, function(buffer) {
@@ -359,34 +340,36 @@ function talk( dialog ) {
 		voiceSound.play();
 	});
 	mixer.stopAllAction();
-	const talk = talks[Math.floor(Math.random() * talks.length)];
+	const talk = Cool.random(talks); //  talks[Math.floor(Math.random() * talks.length)];
 	mixer.clipAction(char.animations[talk], char).play();
 
 	voiceSound.onEnded = function() {
 		voiceSound.isPlaying = false;
 		time = performance.now() + dialog.end;
 		walk();
-		nextClip = true;
-		const nextIndex = dialogs.indexOf(dialog) + 1;
-		if (nextIndex < dialogs.length)
+		const nextIndex = currentScene.dialogs.indexOf(dialog) + 1;
+		if (nextIndex < currentScene.dialogs.length ) {
 			currentDialog = nextIndex;
-		else
+			nextClip = true;
+		} else {
 			setTimeout(end, endDelay);
+		}
 	};
 }
 
 function walk( isWalk ) {
 	mixer.stopAllAction();
 	if (Math.random() > 0.3 || isWalk) {
-		const walk = walks[Math.floor(Math.random() * walks.length)];
+		const walk = Cool.random(walks); // walks[Math.floor(Math.random() * walks.length)];
 		mixer.clipAction(char.animations[walk], char).play();
 		if (char.position.distanceTo(origin) > 10) {
-			char.xSpeed = char.position.x > origin.x ? Cool.random(-charSpeed.min, 0) : Cool.random(0, charSpeed.min);
-			char.zSpeed = char.position.z > origin.z ? Cool.random(-charSpeed.min, 0) : Cool.random(0, charSpeed.min);
+			char.xSpeed = char.position.x > origin.x ? Cool.random(-currentScene.charSpeed.min, 0) : Cool.random(0, currentScene.charSpeed.min);
+			char.zSpeed = char.position.z > origin.z ? Cool.random(-currentScene.charSpeed.min, 0) : Cool.random(0, currentScene.charSpeed.min);
 		} else {
-			char.xSpeed = Cool.random(-charSpeed.min, charSpeed.min);
-			char.zSpeed = Cool.random(-charSpeed.min, charSpeed.min);
+			char.xSpeed = Cool.random(-currentScene.charSpeed.min, currentScene.charSpeed.min);
+			char.zSpeed = Cool.random(-currentScene.charSpeed.min, currentScene.charSpeed.min);
 		}
+		camera.ySpeed = 0;
 		const vec = new THREE.Vector3(
 			char.position.x + char.xSpeed, 
 			char.position.y,
@@ -394,13 +377,13 @@ function walk( isWalk ) {
 		);
 		char.lookAt(vec);
 	} else {
-		const idle = idles[Math.floor(Math.random() * idles.length)];
+		const idle = Cool.random(idles); // idles[Math.floor(Math.random() * idles.length)];
 		mixer.clipAction(char.animations[idle], char).play();
 	}
 }
 
 function end() {
-	bgLoader.load(endFile, function(buffer) {
+	bgLoader.load(currentScene.endFile, function(buffer) {
 		bgMusic.stop();
 		bgMusic.isPlaying = false;
 		bgMusic.setBuffer( buffer );
@@ -409,32 +392,35 @@ function end() {
 		bgMusic.play();
 	});
 	setTimeout(function() { 
-		exitFullscreen();
+		// exitFullscreen();
 		restart = true;
 		nextClip = false;
+
 		blocker.style.display = 'block';
-		instructions.style.display = 'block';
-		startButton.textContent = "Tap to play again";
-		instructions.textContent = "The End";
-		document.getElementById("hotdogs-link").style.display = "block";
+		blocker.style.opacity = 1;
+		scenes.style.display = 'block';
+		theEnd.style.display = 'block';
+		
 		mixer.stopAllAction();
-		const endAnim = [3, 6, 8][Cool.randomInt(0,2)];
+		
+		const endAnim = Cool.random(currentScene.endAnim); // what do these map to?
 		mixer.clipAction(char.animations[endAnim], char).play();
 		char.xSpeed = 0;
 		char.zSpeed = 0;
-		linesPlayer.loadAnimation(lastDrawing, () => {
+		linesPlayer.load(currentScene.lastDrawing, () => {
 			// turn on dialog.sides, off others
-			planes.map((p, i) => [0,1,4,5].indexOf(i) != -1 ? p.visible = true : p.visible = false);
+			planes.map((p, i) => p.visible = currentScene.lastSides.includes(i));
 			linesPlayer.ctx.lineWidth = 2;
 		});
-	}, 2000);
+	}, 4000);
 }
 
 /* 0: delay, 1: play, 2: end */
 function animate() {
 	/* audio clips */
+	// console.log(nextClip);
 	if (performance.now() > time && nextClip) {
-		let dialog = dialogs[currentDialog];
+		let dialog = currentScene.dialogs[currentDialog];
 		if (dialog.start == 1) {
 			talk( dialog );
 		} else {
@@ -444,6 +430,7 @@ function animate() {
 			time += dialog.delay;
 			// walk();
 		}
+		// console.log(dialog);
 	}
 
 	requestAnimationFrame( animate );
@@ -453,10 +440,11 @@ function animate() {
 
 	char.position.x += char.xSpeed;
 	char.position.z += char.zSpeed;
+
 	camera.position.x = char.position.x + cameraOffset.x;
 	camera.position.z = char.position.z + cameraOffset.z;
 
-	camera.position.y += cameraSpeed;
+	camera.position.y += currentScene.cameraSpeed;
 
 	if (!touchControls) controls.update();
 	// renderer.render(scene, camera);
@@ -472,23 +460,6 @@ function onWindowResize() {
 	renderer.setSize(width, height);
 }
 window.addEventListener( 'resize', onWindowResize, false );
-
-function fullscreen() {
-	if (renderer.domElement.requestFullscreen) {
-		renderer.domElement.requestFullscreen();
-	} else if (renderer.domElement.msRequestFullscreen) {
-		renderer.domElement.msRequestFullscreen();
-	} else if (renderer.domElement.mozRequestFullScreen) {
-		renderer.domElement.mozRequestFullScreen();
-	} else if (renderer.domElement.webkitRequestFullscreen) {
-		renderer.domElement.webkitRequestFullscreen();
-	}
-}
-
-function exitFullscreen() {
-	document.exitFullscreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
-	if (document.exitFullscreen) document.exitFullscreen();
-}
 
 function setupTouchControls() {
 	renderer.domElement.addEventListener("touchstart", handleStart);
@@ -514,7 +485,7 @@ function handleMove(ev) {
 }
 
 document.addEventListener( 'visibilitychange', ev => {
-	location.reload(); // easier for now
+	// location.reload(); // easier for now
 	// if (document.hidden && !bgMusic.paused) {
 	// 	bgMusic.pause();
 	// 	voiceSound.pause();

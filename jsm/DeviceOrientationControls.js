@@ -88,9 +88,11 @@ var DeviceOrientationControls = function ( object ) {
 			} );
 
 		} else {
+
 			window.addEventListener( 'orientationchange', onScreenOrientationChangeEvent, false );
 			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-			onControlsGranted(); // android
+			// onControlsGranted(); // android
+			onCheckDevice();
 		}
 
 		scope.enabled = true;

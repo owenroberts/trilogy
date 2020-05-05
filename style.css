@@ -9,6 +9,7 @@ body {
 	-moz-user-select: none;     /* Firefox all */
 	-ms-user-select: none;      /* IE 10+ */
 	user-select: none;          /* Likely future */  
+	/*pointer-events: none;*/
 }
 
 #lines, #lines2 {
@@ -42,11 +43,11 @@ button {
 	border-radius: 0.25em;
 }
 
-#start-button, #init-button {
+#start-button, #init-button, #tap {
 	font-size: 2em;
 }
 
-#start-button {
+#scenes, #loading, #tap, #the-end {
 	display: none;
 }
 
