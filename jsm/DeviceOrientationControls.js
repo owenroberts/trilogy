@@ -12,7 +12,7 @@ import {
 	Vector3
 } from "./three.module.js";
 
-var DeviceOrientationControls = function ( object ) {
+var DeviceOrientationControls = function ( object, events ) {
 
 	var scope = this;
 
@@ -77,14 +77,14 @@ var DeviceOrientationControls = function ( object ) {
 				if ( response == 'granted' ) {
 					window.addEventListener( 'orientationchange', onScreenOrientationChangeEvent, false );
 					window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
-					onControlsGranted();
+					events.onControlsGranted();
 				} else {
-					onControlsDenied();
+					events.onControlsDenied();
 				}
 
 			} ).catch( function ( error ) {
 				console.error( 'THREE.DeviceOrientationControls: Unable to use DeviceOrientation API:', error );
-				onControlsDenied();
+				events.onControlsDenied();
 			} );
 
 		} else {
@@ -92,7 +92,7 @@ var DeviceOrientationControls = function ( object ) {
 			window.addEventListener( 'orientationchange', onScreenOrientationChangeEvent, false );
 			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
 			// onControlsGranted(); // android
-			onCheckDevice();
+			events.onCheckDevice();
 		}
 
 		scope.enabled = true;

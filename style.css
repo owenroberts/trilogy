@@ -47,7 +47,17 @@ button {
 	font-size: 2em;
 }
 
-#scenes, #loading, #tap, #the-end {
+#loading, #tap, #the-end {
+	display: none;
+}
+
+#scenes {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+#scenes.hidden {
 	display: none;
 }
 

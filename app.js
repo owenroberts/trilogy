@@ -68,6 +68,8 @@ let loader;
 
 let char, model;
 
+let fuckingAndroid = navigator.userAgent.toLowerCase().includes("android");
+
 document.getElementById('launch-touch').onclick = launchTouch;
 let touchControls = false;
 function launchTouch() {
@@ -76,10 +78,10 @@ function launchTouch() {
 }
 
 function launch() {
-	scenes.style.display = 'block';
+	scenes.classList.remove('hidden');
 	instructions.innerHTML = "Headphones recommended." 
 	if (!touchControls) instructions.innerHTML += "<br> Rotate phone to view.";
-	document.getElementById('phone').style.display = 'block';
+	if (document.getElementById('phone')) document.getElementById('phone').style.display = 'block';
 	if (document.getElementById('desktop')) document.getElementById('desktop').remove();
 }
 
@@ -90,10 +92,7 @@ function init() {
 	clock = new THREE.Clock();
 	scene = new THREE.Scene();
 
-	// change orientation for android
-	if (navigator.userAgent.toLowerCase().indexOf("android") > -1) {
-		scene.rotation.set( 0, -Math.PI/2, 0 );
-	}
+	
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio( window.devicePixelRatio );
@@ -106,27 +105,31 @@ function init() {
 	});
 
 	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
-	
+	cameraOffset = camera.position.clone();
 	/* if device access granted, launch, else show touch controls button */
-	window.onControlsGranted = function() {
-		launch();
-	};
+	const events = {
+		onControlsGranted() {
+			launch();
+		},
+		onControlsDenied() {
+			document.getElementById('desktop').style.opacity = 1;
+		},
+		onCheckDevice() {
+			document.getElementById('desktop').style.opacity = 1;
 
-	window.onControlsDenied = function() {
-		document.getElementById('desktop').style.opacity = 1;
-	};
+			function onMotion(ev) {
+				window.removeEventListener('devicemotion', onMotion, false);
+				if (event.rotationRate.alpha || event.rotationRate.beta || event.rotationRate.gamma) {
+					if (document.getElementById('desktop')) 
+						document.getElementById('desktop').style.opacity = 0;
+					launch();
+				}
+			}
+			window.addEventListener('devicemotion', onMotion, false);
+		}
+	}
 
-	window.onCheckDevice = function( controls ) {
-		document.getElementById('desktop').style.opacity = 1;
-		window.addEventListener("devicemotion", function(event) {
-   	 		if (event.rotationRate.alpha || event.rotationRate.beta || event.rotationRate.gamma)
-    	    	document.getElementById('desktop').style.opacity = 0;
-
-		});
-
-	};
-
-	controls = new DeviceOrientationControls( camera );
+	controls = new DeviceOrientationControls( camera, events );
 
 	/* outside lines */
 	lines.width =  1024;
@@ -190,28 +193,17 @@ function loadModel(callback) {
 			}
 		}
 
-		// change orientation for android
-		if (navigator.userAgent.toLowerCase().indexOf("android") > -1) {
-			// console.log('android')
-			model.position.set( currentScene.androidPosition.x, currentScene.androidPosition.y, currentScene.androidPosition.z );
-			// char.rotation.set( 0, -Math.PI/2, 0 );
-			cameraOffset.x -= model.position.x;
-			cameraOffset.z -= model.position.z;
-		} else {
-			// console.log('position', currentScene.charPosition);
-			model.position.set( currentScene.charPosition.x, currentScene.charPosition.y, currentScene.charPosition.z );
-		}
+		
 
+		model.position.set( 
+			currentScene.charPosition.x, 
+			currentScene.charPosition.y,
+			currentScene.charPosition.z 
+		);
 		model.scale.set( 0.5, 0.5, 0.5 );
 		model.xSpeed = 0;
 		model.zSpeed = 0;
 		model.add( voiceSound );
-
-		// console.log(model.animations);
-		
-		// first anim ?
-		// mixer.clipAction( model.animations[currentScene.startIndex], model ).play();
-
 		callback();
 	});
 }
@@ -231,7 +223,7 @@ function chooseScene(ev) {
 	});
 
 	loading.style.display = 'block';
-	scenes.style.display = 'none';
+	scenes.classList.add('hidden');
 	// set current scene
 	loadModel(startScene);
 }
@@ -272,11 +264,21 @@ function start() {
 	camera.position.y = currentScene.camera.position.y;
 	camera.position.z = currentScene.camera.position.z;
 	cameraOffset = camera.position.clone();
-	camera.rotation.set( 0, 0, 0 );
 	
+	// change orientation for android
+	if (fuckingAndroid) {
+		scene.rotation.set( 0, -Math.PI/2, 0 );
+		char.position.set( 
+			currentScene.androidPosition.x, 
+			currentScene.androidPosition.y, 
+			currentScene.androidPosition.z 
+		);
+		cameraOffset.x -= char.position.x;
+		cameraOffset.z -= char.position.z;
+	} else {
+		camera.rotation.set( 0, 0, 0 );
+	}
 
-
-	
 	currentDialog = 0;
 	currentScene.dialogs.map(d => d.start = 0);
 	
@@ -398,7 +400,7 @@ function end() {
 
 		blocker.style.display = 'block';
 		blocker.style.opacity = 1;
-		scenes.style.display = 'block';
+		scenes.classList.remove('hidden');
 		theEnd.style.display = 'block';
 		
 		mixer.stopAllAction();
