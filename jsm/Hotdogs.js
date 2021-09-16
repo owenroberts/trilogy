@@ -1,4 +1,5 @@
 export const Hotdogs = {
+	sceneName: "Hotdogs",
 	themeFile: "clips/hotdogs/theme_7_80_12.mp3",
 	themeVolume: 1,
 	endFile: 'clips/hotdogs/end.mp3',

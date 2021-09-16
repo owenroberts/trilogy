@@ -81,6 +81,8 @@ function launch() {
 	scenes.classList.remove('hidden');
 	instructions.innerHTML = "Headphones recommended." 
 	if (!touchControls) instructions.innerHTML += "<br> Rotate phone to view.";
+	instructions.innerHTML += "<br> The audio in web applications on iOS sometimes gets distorted, so I added a fix to save your place in the story.  If you hear distortion, refresh the page and you should start near where you left off.";
+
 	if (document.getElementById('phone')) document.getElementById('phone').style.display = 'block';
 	if (document.getElementById('desktop')) document.getElementById('desktop').remove();
 }
@@ -91,8 +93,6 @@ function init() {
 
 	clock = new THREE.Clock();
 	scene = new THREE.Scene();
-
-	
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio( window.devicePixelRatio );
@@ -193,8 +193,6 @@ function loadModel(callback) {
 			}
 		}
 
-		
-
 		model.position.set( 
 			currentScene.charPosition.x, 
 			currentScene.charPosition.y,
@@ -214,6 +212,8 @@ function chooseScene(ev) {
 	if (ev.target.dataset.part == 1) currentScene = Hotdogs;
 	if (ev.target.dataset.part == 2) currentScene = Trampoline;
 	if (ev.target.dataset.part == 3) currentScene = Funeral;
+
+	console.log(currentScene);
 
 	bgMusic.setVolume( currentScene.themeVolume );
 	bgLoader.load(currentScene.themeFile, buffer => {
@@ -279,7 +279,7 @@ function start() {
 		camera.rotation.set( 0, 0, 0 );
 	}
 
-	currentDialog = 0;
+	currentDialog = localStorage.getItem(currentScene.sceneName) || 0;
 	currentScene.dialogs.map(d => d.start = 0);
 	
 	if (bgMusic.isPlaying) bgMusic.stop();
@@ -352,6 +352,8 @@ function talk( dialog ) {
 		const nextIndex = currentScene.dialogs.indexOf(dialog) + 1;
 		if (nextIndex < currentScene.dialogs.length ) {
 			currentDialog = nextIndex;
+			localStorage.setItem(currentScene.sceneName, currentDialog);
+			localStorage
 			nextClip = true;
 		} else {
 			setTimeout(end, endDelay);
@@ -392,7 +394,11 @@ function end() {
 		bgMusic.setLoop( false );
 		bgMusic.setVolume( 1 );
 		bgMusic.play();
+
+		localStorage.setItem(`${currentScene.sceneName}`, 0);
+
 	});
+
 	setTimeout(function() { 
 		// exitFullscreen();
 		restart = true;

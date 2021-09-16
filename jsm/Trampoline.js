@@ -1,4 +1,5 @@
 export const Trampoline = {
+	sceneName: "Tramoline",
 	themeFile: "clips/trampoline/theme_1_80.mp3",
 	themeVolume: 1,
 	endFile: 'clips/trampoline/end.mp3',

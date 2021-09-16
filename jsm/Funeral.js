@@ -1,4 +1,5 @@
 export const Funeral = {
+	sceneName: "Funeral",
 	themeFile: 'clips/funeral/theme_80.mp3',
 	themeVolume: 0.25,
 	endFile: 'clips/funeral/end_80.mp3',
